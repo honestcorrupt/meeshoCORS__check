@@ -2,19 +2,20 @@
 <html>
 <head><title>Meesho CORS Debug</title></head>
 <body>
-<h2>Meesho CORS Test - Check Console (F12)</h2>
+<h2>Meesho CORS Test - Check Console + Network Tab</h2>
+<button onclick="testCORS()">Run Test</button>
 
 <script>
 async function testCORS() {
-  const targetUrl = "https://www.meesho.com/zMrsM4/K1zIxg/4/c3d/L0g4NSwh/Oauuppi50brE0JEGiw/ATJQAQ/ZD/JXERNKOUsB";
+  const url = "https://www.meesho.com/zMrsM4/K1zIxg/4/c3d/L0g4NSwh/Oauuppi50brE0JEGiw/ATJQAQ/ZD/JXERNKOUsB";
 
-  console.log("Starting test from origin:", window.location.origin);
+  console.clear();
+  console.log("🔍 Testing from:", window.location.origin);
 
+  // 1. Test OPTIONS preflight
   try {
-    // First do manual preflight simulation
-    console.log("Sending OPTIONS preflight...");
-    
-    const preflight = await fetch(targetUrl, {
+    console.log("→ Sending OPTIONS preflight...");
+    const pre = await fetch(url, {
       method: "OPTIONS",
       headers: {
         "Origin": window.location.origin,
@@ -22,38 +23,29 @@ async function testCORS() {
         "Access-Control-Request-Headers": "Content-Type"
       }
     });
+    console.log("Preflight Status:", pre.status);
+    console.log("Preflight ACAO:", pre.headers.get("access-control-allow-origin"));
+    console.log("Preflight ACAC:", pre.headers.get("access-control-allow-credentials"));
+  } catch(e) { console.error("Preflight failed:", e); }
 
-    console.log("Preflight Status:", preflight.status);
-    console.log("Preflight Headers:", Object.fromEntries(preflight.headers));
-
-    // Now try the actual POST
-    const res = await fetch(targetUrl, {
+  // 2. Try actual POST
+  try {
+    console.log("→ Sending POST...");
+    const res = await fetch(url, {
       method: "POST",
       credentials: "include",
-      headers: {
-        "Content-Type": "text/plain;charset=UTF-8",
-        "Origin": window.location.origin
-      },
-      body: JSON.stringify({ test: "data", timestamp: Date.now() })
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+      body: "test"
     });
 
     console.log("POST Status:", res.status);
-    console.log("Response Headers:", Object.fromEntries(res.headers));
-
+    console.log("Response ACAO:", res.headers.get("access-control-allow-origin"));
     const data = await res.text();
     console.log("Response Body:", data);
-
-    if (data.length > 5) {
-      alert("✅ Got real data! Check console.");
-    }
-
-  } catch (e) {
-    console.error("❌ Error:", e);
-    alert("Blocked - Check console for details");
+  } catch(e) {
+    console.error("POST failed:", e.message);
   }
 }
-
-testCORS();
 </script>
 </body>
 </html>

